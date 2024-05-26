@@ -1,0 +1,44 @@
+services:
+  db:
+    container_name: mysql-database
+    image: mysql:latest
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backnet
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: changeit
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="$$DB_PASSWORD" --silent']
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  phpmyadmin:
+    container_name: phpmyadmin-dashboard
+    image: phpmyadmin:latest
+    restart: always
+    networks:
+      - backnet
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+      - PMA_USER=${DB_USERNAME}
+      - PMA_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+
+networks:
+  backnet:
